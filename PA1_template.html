@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+<meta name="author" content="Mykola Klymenko" />
+
+<meta name="date" content="2016-05-15" />
+
+<title>Reproducible Research: Course Project 1</title>
+
+<script src="PA1_template_files/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="PA1_template_files/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
+<script src="PA1_template_files/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="PA1_template_files/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="PA1_template_files/bootstrap-3.3.5/shim/respond.min.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<link rel="stylesheet"
+      href="PA1_template_files/highlight/default.css"
+      type="text/css" />
+<script src="PA1_template_files/highlight/highlight.js"></script>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs && document.readyState && document.readyState === "complete") {
+   window.setTimeout(function() {
+      hljs.initHighlighting();
+   }, 0);
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+
+</head>
+
+<body>
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+  height: auto;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+</style>
+
+
+<div class="container-fluid main-container">
+
+<!-- tabsets -->
+<script src="PA1_template_files/navigation-1.0/tabsets.js"></script>
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+</script>
+
+<!-- code folding -->
+
+
+
+
+
+
+<div class="fluid-row" id="header">
+
+
+
+<h1 class="title toc-ignore">Reproducible Research: Course Project 1</h1>
+<h4 class="author"><em>Mykola Klymenko</em></h4>
+<h4 class="date"><em>15 May 2016</em></h4>
+
+</div>
+
+
+<div id="intro" class="section level2">
+<h2>Intro</h2>
+<p>This document is focused on researching the data from a personal activity monitoring device. This device collects data at 5 minute intervals through out the day. The data consists of two months of data from an anonymous individual collected during the months of October and November, 2012 and include the number of steps taken in 5 minute intervals each day.</p>
+<p>The data for this assignment can be downloaded from the course web site:</p>
+<p>Dataset: <a href="https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip">Activity monitoring data</a> [52K]</p>
+<p>The variables included in this dataset are:</p>
+<p><em>steps</em>: Number of steps taking in a 5-minute interval (missing values are coded as NA)<br /><em>date</em>: The date on which the measurement was taken in YYYY-MM-DD format<br /><em>interval</em>: Identifier for the 5-minute interval in which measurement was taken</p>
+<p>The dataset is stored in a comma-separated-value (CSV) file and there are a total of 17,568 observations in this dataset.</p>
+<p><strong>Loading and preprocessing the data</strong></p>
+<pre class="r"><code>Url &lt;- &#39;https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip&#39;
+dataDir &lt;- &#39;./data&#39;
+zipFile &lt;- &#39;./data/Data.zip&#39;
+
+# Data folder creation
+if (!file.exists(dataDir)) {
+  dir.create(dataDir)
+}
+  
+# File download
+if (!file.exists(zipFile)) {
+  download.file(url = Url, destfile = zipFile)
+  unzip(zipFile, exdir = dataDir)
+}
+dataFile &lt;- unzip(zipFile, list = TRUE)$Name
+# Data input
+input &lt;- read.csv(file.path(dataDir, dataFile))</code></pre>
+<pre class="r"><code>library(dplyr)
+library(ggplot2)</code></pre>
+</div>
+<div id="what-is-mean-total-number-of-steps-taken-per-day" class="section level2">
+<h2>1. What is mean total number of steps taken per day?</h2>
+<pre class="r"><code># Calculate the total number of steps taken per day
+input_byDay &lt;- group_by(input, date)
+input_sum_byDay &lt;- summarise(input_byDay, sum.step = sum(steps))
+
+# Make a histogram of the total number of steps taken each day
+ticks &lt;- seq(as.Date(input_sum_byDay$date[1]), 
+             as.Date(input_sum_byDay$date[length(input_sum_byDay$date)]), 
+             by = 6)
+
+p &lt;- ggplot(data = input_sum_byDay) + 
+  stat_count(aes(x = date, weights = sum.step), width = 0.5) +
+  ylab(&#39;Number of steps&#39;) + 
+  ggtitle(&#39;Total number of steps taken each day&#39;) +
+  scale_x_discrete(&#39;Date&#39;, breaks = as.factor(ticks), labels = waiver()) +
+  theme(axis.text.x = element_text(angle = 90))
+p</code></pre>
+<p><img src="PA1_template_files/figure-html/MeanTotStep-1.png" /><!-- --></p>
+<pre class="r"><code># Calculate and report the mean and median of the total number 
+# of steps taken per day
+mean_total_per_day &lt;- summary(input_sum_byDay$sum.step)[&#39;Mean&#39;]
+median_total_per_day &lt;- summary(input_sum_byDay$sum.step)[&#39;Median&#39;]
+print(c(&#39;Mean of total steps per day: &#39;, as.character(mean_total_per_day), 
+      &#39;Median of total steps per day: &#39;, as.character(median_total_per_day)))</code></pre>
+<pre><code>## [1] &quot;Mean of total steps per day: &quot;   &quot;10770&quot;                          
+## [3] &quot;Median of total steps per day: &quot; &quot;10760&quot;</code></pre>
+</div>
+<div id="what-is-the-average-daily-activity-pattern" class="section level2">
+<h2>2. What is the average daily activity pattern?</h2>
+<pre class="r"><code># Make a time series plot (i.e. type = &quot;l&quot;) of the 5-minute interval (x-axis) 
+# and the average number of steps taken, averaged across all days (y-axis)
+# Which 5-minute interval, on average across all the days in the dataset, 
+# contains the maximum number of steps?
+input_byInterval &lt;- group_by(input, interval)
+input_mean_byInterval &lt;- summarise(input_byInterval, mean.step = mean(steps, na.rm = TRUE))
+plot1D &lt;- input_mean_byInterval
+max_av_int &lt;- input_mean_byInterval[which.max(input_mean_byInterval$mean.step),]$interval
+
+plot(plot1D$interval, plot1D$mean.step, type = &quot;l&quot;, lwd = 1,
+     xlab = &#39;interval&#39;, ylab = &#39;Average number of steps&#39;,
+     main = &#39;Average number of steps per interval&#39;,
+     cex.lab = 0.8, cex.axis = 0.7)
+abline(v = max_av_int)
+axis(side = 1, at = max_av_int, cex.axis = 0.7)</code></pre>
+<p><img src="PA1_template_files/figure-html/AverDailyAct-1.png" /><!-- --></p>
+<p>As we can see, the maximum amount of steps on average was performed during the interval of 8:35am, which may correspond with going-to-work time.</p>
+</div>
+<div id="imputing-missing-values" class="section level2">
+<h2>3. Imputing missing values</h2>
+<pre class="r"><code># Note that there are a number of days/intervals where there are missing values 
+# (coded as NA). The presence of missing days may introduce bias into 
+# some calculations or summaries of the data.
+#
+# Calculate and report the total number of missing values in the dataset 
+# (i.e. the total number of rows with NAs)
+total_NA &lt;- summary(input$steps)[&quot;NA&#39;s&quot;]
+
+# Devise a strategy for filling in all of the missing values in the dataset. 
+# The strategy does not need to be sophisticated. For example, you could use 
+# the mean/median for that day, or the mean for that 5-minute interval, etc.
+# Create a new dataset that is equal to the original dataset but with 
+# the missing data filled in.
+input_clean &lt;- input
+for (i in 1:length(input_clean$steps)) {
+  if (is.na(input_clean$steps[i])) {
+    ind &lt;- which(input_mean_byInterval$interval == input_clean$interval[i])
+    input_clean$steps[i] &lt;- input_mean_byInterval$mean.step[ind] 
+  }
+}
+input_clean_byDate &lt;- group_by(input_clean, date)
+input_clean_tot_byDate &lt;- summarise(input_clean_byDate, total.step = sum(steps))
+
+# Make a histogram of the total number of steps taken each day and
+plot2D &lt;- input_clean_tot_byDate
+ticks2 &lt;- seq(as.Date(plot2D$date[1]), 
+             as.Date(plot2D$date[length(plot2D$date)]), 
+             by = 6)
+
+p2 &lt;- ggplot(data = plot2D) + 
+  stat_count(aes(x = date, weights = total.step), width = 0.5) +
+  ylab(&#39;Number of steps&#39;) + 
+  ggtitle(&#39;Total number of steps taken each day (with NA values imputed)&#39;) +
+  scale_x_discrete(&#39;Date&#39;, breaks = as.factor(ticks2), labels = waiver()) +
+  theme(axis.text.x = element_text(angle = 90))
+p2</code></pre>
+<p><img src="PA1_template_files/figure-html/ImpMisVal-1.png" /><!-- --></p>
+<pre class="r"><code># Calculate and report the mean and median total number of steps taken per day. 
+# Do these values differ from the estimates from the first part of the assignment? 
+# What is the impact of imputing missing data on the estimates of the total daily 
+# number of steps?
+mean_clean_total_per_day &lt;- summary(input_clean_tot_byDate$total.step)[&#39;Mean&#39;]
+median_clean_total_per_day &lt;- summary(input_clean_tot_byDate$total.step)[&#39;Median&#39;]
+print(c(&#39;Mean of total steps per day: &#39;, as.character(mean_clean_total_per_day), 
+        &#39;Median of total steps per day: &#39;, as.character(median_clean_total_per_day)))</code></pre>
+<pre><code>## [1] &quot;Mean of total steps per day: &quot;   &quot;10770&quot;                          
+## [3] &quot;Median of total steps per day: &quot; &quot;10770&quot;</code></pre>
+</div>
+<div id="are-there-differences-in-activity-patterns-between-weekdays-and-weekends" class="section level2">
+<h2>4. Are there differences in activity patterns between weekdays and weekends?</h2>
+<pre class="r"><code># For this part the weekdays() function may be of some help here. 
+# Use the dataset with the filled-in missing values for this part.
+input_week &lt;- input_clean
+
+# Create a new factor variable in the dataset with two levels – “weekday” 
+# and “weekend” indicating whether a given date is a weekday or weekend day.
+input_week &lt;- mutate(input_week, week = as.factor(weekdays(as.Date(date))))
+
+weekd &lt;- function(day) {
+  if (day %in% c(&#39;Monday&#39;, &#39;Tuesday&#39;, &#39;Wednesday&#39;, &#39;Thursday&#39;, &#39;Friday&#39;)) {
+    return(&#39;weekday&#39;)
+  }
+  if (day %in% c(&#39;Saturday&#39;, &#39;Sunday&#39;)) {
+    return(&#39;weekend&#39;)
+  }
+  else {
+    stop(&#39;Wrong input&#39;)
+  }
+        }
+
+
+for (i in 1:length(input_week$week)) {
+  input_week$wd.type[i] &lt;- weekd(as.character(input_week$week[i]))
+}
+
+# Make a panel plot containing a time series plot (i.e. type = &quot;l&quot;) of 
+# the 5-minute interval (x-axis) and the average number of steps taken, 
+# averaged across all weekday days or weekend days (y-axis). 
+# See the README file in the GitHub repository to see an example of what 
+# this plot should look like using simulated data.
+
+input_week_wd &lt;- filter(input_week, wd.type == &#39;weekday&#39;)
+input_week_we &lt;- filter(input_week, wd.type == &#39;weekend&#39;)
+
+input_week_wd_mean_byInt &lt;- summarise(group_by(input_week_wd, interval), 
+                                      av.step.wd = mean(steps))
+input_week_we_mean_byInt &lt;- summarise(group_by(input_week_we, interval), 
+                                      av.step.we = mean(steps))
+input_week_mean_byInt &lt;- merge(input_week_wd_mean_byInt, input_week_we_mean_byInt)
+
+par(mfrow = c(2,1), mar = c(4,4.5,3,2.5), cex.lab = 0.75)
+plot(input_week_wd_mean_byInt$interval, input_week_wd_mean_byInt$av.step.wd, 
+     type = &#39;l&#39;, xlab = &#39;Interval&#39;, ylab = &#39;Steps&#39;, 
+     main = &#39;Average number of steps \n on weekdays&#39;)
+plot(input_week_we_mean_byInt$interval, input_week_we_mean_byInt$av.step.we, 
+     type = &#39;l&#39;, xlab = &#39;Interval&#39;, ylab = &#39;Steps&#39;, 
+     main = &#39;Average number of steps \n on weekends&#39;)</code></pre>
+<p><img src="PA1_template_files/figure-html/DiffActPatt-1.png" /><!-- --></p>
+<p>Having observed the graphs, we may conclude that activity on weekdays is less dispersed and concentrated around the ‘peak-time’ in the mornings.</p>
+</div>
+
+
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+$(document).ready(function () {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+});
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

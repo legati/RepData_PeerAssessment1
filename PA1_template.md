@@ -1,13 +1,6 @@
----
-title: 'Reproducible Research: Course Project 1'
-author: "Mykola Klymenko"
-date: "15 May 2016"
-output: 
-  html_document: 
-    fig_caption: yes
-    keep_md: yes
-    self_contained: no
----
+# Reproducible Research: Course Project 1
+Mykola Klymenko  
+15 May 2016  
 ##Intro
 
 This document is focused on researching the data from a personal activity monitoring device.
@@ -26,7 +19,8 @@ The variables included in this dataset are:
 The dataset is stored in a comma-separated-value (CSV) file and there are a total of 17,568 observations in this dataset.  
 
 **Loading and preprocessing the data**
-```{r Data L&P}
+
+```r
 Url <- 'https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip'
 dataDir <- './data'
 zipFile <- './data/Data.zip'
@@ -46,12 +40,14 @@ dataFile <- unzip(zipFile, list = TRUE)$Name
 input <- read.csv(file.path(dataDir, dataFile))
 ```
 
-```{r Libraries, results = 'hide', message = FALSE}
+
+```r
 library(dplyr)
 library(ggplot2)
 ```
 ##1. What is mean total number of steps taken per day?
-```{r MeanTotStep}
+
+```r
 # Calculate the total number of steps taken per day
 input_byDay <- group_by(input, date)
 input_sum_byDay <- summarise(input_byDay, sum.step = sum(steps))
@@ -68,7 +64,11 @@ p <- ggplot(data = input_sum_byDay) +
   scale_x_discrete('Date', breaks = as.factor(ticks), labels = waiver()) +
   theme(axis.text.x = element_text(angle = 90))
 p
+```
 
+![](PA1_template_files/figure-html/MeanTotStep-1.png)<!-- -->
+
+```r
 # Calculate and report the mean and median of the total number 
 # of steps taken per day
 mean_total_per_day <- summary(input_sum_byDay$sum.step)['Mean']
@@ -77,8 +77,14 @@ print(c('Mean of total steps per day: ', as.character(mean_total_per_day),
       'Median of total steps per day: ', as.character(median_total_per_day)))
 ```
 
+```
+## [1] "Mean of total steps per day: "   "10770"                          
+## [3] "Median of total steps per day: " "10760"
+```
+
 ##2. What is the average daily activity pattern?
-```{r AverDailyAct}
+
+```r
 # Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) 
 # and the average number of steps taken, averaged across all days (y-axis)
 # Which 5-minute interval, on average across all the days in the dataset, 
@@ -96,10 +102,13 @@ abline(v = max_av_int)
 axis(side = 1, at = max_av_int, cex.axis = 0.7)
 ```
 
+![](PA1_template_files/figure-html/AverDailyAct-1.png)<!-- -->
+
 As we can see, the maximum amount of steps on average was performed during the interval of 8:35am, which may correspond with going-to-work time.
 
 ##3. Imputing missing values
-```{r ImpMisVal}
+
+```r
 # Note that there are a number of days/intervals where there are missing values 
 # (coded as NA). The presence of missing days may introduce bias into 
 # some calculations or summaries of the data.
@@ -136,7 +145,11 @@ p2 <- ggplot(data = plot2D) +
   scale_x_discrete('Date', breaks = as.factor(ticks2), labels = waiver()) +
   theme(axis.text.x = element_text(angle = 90))
 p2
+```
 
+![](PA1_template_files/figure-html/ImpMisVal-1.png)<!-- -->
+
+```r
 # Calculate and report the mean and median total number of steps taken per day. 
 # Do these values differ from the estimates from the first part of the assignment? 
 # What is the impact of imputing missing data on the estimates of the total daily 
@@ -147,8 +160,14 @@ print(c('Mean of total steps per day: ', as.character(mean_clean_total_per_day),
         'Median of total steps per day: ', as.character(median_clean_total_per_day)))
 ```
 
+```
+## [1] "Mean of total steps per day: "   "10770"                          
+## [3] "Median of total steps per day: " "10770"
+```
+
 ##4. Are there differences in activity patterns between weekdays and weekends?
-```{r DiffActPatt}
+
+```r
 # For this part the weekdays() function may be of some help here. 
 # Use the dataset with the filled-in missing values for this part.
 input_week <- input_clean
@@ -197,5 +216,7 @@ plot(input_week_we_mean_byInt$interval, input_week_we_mean_byInt$av.step.we,
      type = 'l', xlab = 'Interval', ylab = 'Steps', 
      main = 'Average number of steps \n on weekends')
 ```
+
+![](PA1_template_files/figure-html/DiffActPatt-1.png)<!-- -->
 
 Having observed the graphs, we may conclude that activity on weekdays is less dispersed and concentrated around the 'peak-time' in the mornings.  
